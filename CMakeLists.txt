@@ -60,3 +60,21 @@ target_link_libraries(Task14 PRIVATE ${OpenMP_CXX_FLAGS})
 add_executable(Task15 task15.cpp)
 target_compile_options(Task15 PRIVATE -Wall ${OpenMP_CXX_FLAGS})
 target_link_libraries(Task15 PRIVATE ${OpenMP_CXX_FLAGS})
+
+# MPI
+find_package(MPI REQUIRED)
+
+add_executable(MPI1 mpi/task1_1/task1_1.cpp)
+target_link_libraries(MPI1 PUBLIC MPI::MPI_CXX)
+
+add_executable(MPI2 mpi/task1_2/task1_2.cpp)
+target_link_libraries(MPI2 PUBLIC MPI::MPI_CXX)
+
+add_executable(MPI3 mpi/task1_3/task1_3.cpp)
+target_link_libraries(MPI3 PUBLIC MPI::MPI_CXX)
+
+add_executable(MPI4 mpi/task1_4/task1_4.cpp)
+target_link_libraries(MPI4 PUBLIC MPI::MPI_CXX)
+
+add_executable(MPI5 mpi/task1_5/task1_5.cpp)
+target_link_libraries(MPI5 PUBLIC MPI::MPI_CXX)

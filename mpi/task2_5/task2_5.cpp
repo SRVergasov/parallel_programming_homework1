@@ -29,9 +29,7 @@ int main(int argc, char **argv) {
         }
 
         for (int i = 1; i < size; i++) {
-            for (int row = i - 1; row < N; row += size - 1) {
-                MPI_Send(matrix[row], N, MPI_INT, i, 0, MPI_COMM_WORLD);
-            }
+            MPI_Send(matrix[i - 1], N, MPI_INT, i, 0, MPI_COMM_WORLD);
         }
     } else {
         for (int row = rank - 1; row < N; row += size - 1) {

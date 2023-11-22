@@ -1,74 +1,69 @@
-#include <cstdio>
 #include <mpi.h>
+#include <stdio.h>
 #include <iostream>
+#include <stdlib.h>
 
-int rand(int min, int max) {
-    return min + std::rand() % max;
-}
+int main(int argc, char **argv)
+{
+    // random seed
+    srand(time(0));
 
-int main(int argc, char **argv) {
-    const int N = 12;
+    int rank;
+    int size;
+    int const M = 20;
+    int const N = 10;
+    int* A = (int*) malloc(sizeof(int) * M * N);
+    int* B;
+    int *B_proc;
 
-    int rank, size;
 
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    int matrix[N][N];
-    int transposedMatrix[N][N];
+    if (M % size != 0) {
+        printf("Amount of processes must be a divider of %d\n", N);
+        exit(1);
+    }
+
 
     if (rank == 0) {
-        printf("Matrix: \n");
-        for (auto & i : matrix) {
-            for (int & j : i) {
-                j = rand(0, 10);
-                printf("%d ", j);
+        std::cout << "A:\n";
+        for (int i = 0; i < M * N; i += N) {
+            for (int j = 0; j < N; j++) {
+                A[i + j] = rand() % 10;
+                std::cout << A[i + j] << " ";
             }
-            printf("\n");
+            std::cout << std::endl;
         }
-
-        for (int i = 1; i < size; i++) {
-            MPI_Send(matrix[i - 1], N, MPI_INT, i, 0, MPI_COMM_WORLD);
-        }
-    } else {
-        for (int row = rank - 1; row < N; row += size - 1) {
-            MPI_Recv(matrix[row], N, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        std::cout << std::endl;
+    }
+    B_proc = (int*) malloc(sizeof(int) * M * N / size);
+    MPI_Bcast(A, M * N, MPI_INT, 0, MPI_COMM_WORLD);
+    int shift = N * rank  / size;
+    for (int i = 0; i < N / size; i++) {
+        for (int j = 0; j < M; j++) {
+            B_proc[i * M + j] = A[j * N + i + shift];
         }
     }
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            transposedMatrix[j][i] = matrix[i][j];
-        }
+    if (rank == 0) {
+        B = (int*) malloc(sizeof(int) * N * M);
     }
 
+    MPI_Gather(B_proc, M * N / size, MPI_INT, B, M * N / size, MPI_INT, 0, MPI_COMM_WORLD);
+
     if (rank == 0) {
-        int result[N][N];
-
-        for (int i = 1; i < size; i++) {
-            MPI_Recv(&result[0][0], N * N, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-            for (int j = 0; j < N; j++) {
-                for (int k = 0; k < N; k++) {
-                    if (result[j][k] == 0) {
-                        result[j][k] = transposedMatrix[j][k];
-                    }
-                }
+        std::cout << "A.T:\n";
+        for (int i = 0; i < N * M; i += M) {
+            for (int j = 0; j < M; j++) {
+                std::cout << B[i + j] << " ";
             }
+            std::cout << std::endl;
         }
-        printf("Transposed matrix:\n");
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                printf("%d ", transposedMatrix[i][j]);
-            }
-            printf("\n");
-        }
-    } else {
-        MPI_Send(&transposedMatrix[0][0], N * N, MPI_INT, 0, 0, MPI_COMM_WORLD);
+        std::cout << std::endl;
     }
 
     MPI_Finalize();
-
     return 0;
 }
